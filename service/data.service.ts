@@ -1,8 +1,13 @@
 import { prisma } from '../utils.server'
-
-const parser = require('xml2json')
+import { XMLParser } from 'fast-xml-parser'
 import TurndownService from 'turndown'
 import { statService } from './stat.service'
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '',
+  isArray: (name) => name === 'thread' || name === 'post',
+})
 const turndownService = new TurndownService()
 
 export type DataSchema = {
@@ -25,7 +30,7 @@ export type DataSchema = {
 
 export class DataService {
   disqusAdapter(xmlData: string): DataSchema {
-    const parsed = JSON.parse(parser.toJson(xmlData)).disqus
+    const parsed = xmlParser.parse(xmlData).disqus
     const threads = (parsed.thread.filter(
       (_) => typeof _.id === 'string' && _.isDeleted === 'false',
     ) as Array<{
