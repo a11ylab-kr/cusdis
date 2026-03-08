@@ -1,5 +1,4 @@
 import { Head } from "../components/Head"
-import NextHead from 'next/head'
 import { Center, Container, Paper, TypographyStylesProvider } from "@mantine/core"
 
 function PrivacyPolicyPage() {
@@ -7,8 +6,6 @@ function PrivacyPolicyPage() {
   return (
     <>
       <Head title="Privacy Policy | Cusdis"></Head>
-      <NextHead>
-      </NextHead>
       <Container>
 
         <TypographyStylesProvider>
