@@ -7,7 +7,7 @@ import { getSession, resolvedConfig, sentry } from '../utils.server'
 import { GetServerSideProps, Redirect } from 'next'
 import axios from 'axios'
 import { UserSession } from '../service'
-import NextHead from 'next/head'
+
 import { Button, Container, Group, Stack, Text, Title, Box, Anchor, Grid, Center, Image, List, Badge, Flex } from '@mantine/core'
 import { AiOutlineArrowRight, AiOutlineRight } from 'react-icons/ai'
 import { usageLimitation } from '../config.common'
@@ -89,10 +89,7 @@ function IndexPage({ session }: Props) {
   return (
     <Box className="">
       <Head title="Cusdis - Lightweight, privacy-first, open-source comment system" />
-      <NextHead>
-        {/* <link rel="preconnect" href="https://fonts.gstatic.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet" /> */}
-      </NextHead>
+
       <Container mt={120}>
         <Stack spacing={48}>
           <Stack>
