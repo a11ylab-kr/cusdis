@@ -207,7 +207,7 @@ export class CommentService extends RequestScopeService {
       },
     })
 
-    this.hookService.addComment(created, projectId)
+    await this.hookService.addComment(created, projectId)
 
     return created
   }
