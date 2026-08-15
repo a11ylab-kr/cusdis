@@ -5,6 +5,7 @@ export default {
 
   // comment
   email: 'Email (optional)',
+  reply_notify: 'Notify me of replies',
   nickname: 'Nickname',
   reply_placeholder: 'Reply...',
   reply_btn: 'Reply',

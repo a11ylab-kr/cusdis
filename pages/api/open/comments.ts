@@ -119,24 +119,12 @@ export default apiHandler()
         content: body.content,
         email: body.email,
         nickname: body.nickname,
+        acceptNotify: body.acceptNotify === true,
         pageTitle: body.pageTitle,
         pageUrl: body.pageUrl,
       },
       body.parentId,
     )
-
-    // send confirm email
-    if (body.acceptNotify === true && body.email) {
-      try {
-        commentService.sendConfirmReplyNotificationEmail(
-          body.email,
-          body.pageTitle,
-          comment.id,
-        )
-      } catch (e) {
-        // TODO: log error
-      }
-    }
 
     statService.capture('add_comment')
 

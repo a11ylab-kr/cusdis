@@ -139,7 +139,8 @@ model Comment {
   by_nickname String
   content     String @db.Text
 
-  approved Boolean @default(false)
+  approved     Boolean @default(false)
+  acceptNotify Boolean @default(false)
 
   parentId String?
   parent   Comment?  @relation("replies", fields: [parentId], references: [id])

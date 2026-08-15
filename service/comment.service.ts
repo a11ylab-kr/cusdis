@@ -1,14 +1,11 @@
 import { Comment, Page, Prisma, User } from '@prisma/client'
 import { RequestScopeService, UserSession } from '.'
-import { prisma, resolvedConfig } from '../utils.server'
+import { HTTPException, prisma } from '../utils.server'
 import { PageService } from './page.service'
 import dayjs from 'dayjs'
 import MarkdownIt from 'markdown-it'
 import { HookService } from './hook.service'
 import { statService } from './stat.service'
-import { EmailService } from './email.service'
-import { TokenService } from './token.service'
-import { makeConfirmReplyNotificationTemplate } from '../templates/confirm_reply_notification'
 import utc from 'dayjs/plugin/utc'
 dayjs.extend(utc)
 
@@ -36,8 +33,6 @@ export type CommentItem = Comment & {
 export class CommentService extends RequestScopeService {
   pageService = new PageService(this.req)
   hookService = new HookService(this.req)
-  emailService = new EmailService()
-  tokenService = new TokenService()
 
   async getComments(
     projectId: string,
@@ -168,22 +163,45 @@ export class CommentService extends RequestScopeService {
       content: string
       email: string
       nickname: string
+      acceptNotify?: boolean
       pageUrl?: string
       pageTitle?: string
     },
     parentId?: string,
   ) {
-    // touch page
-    const page = await this.pageService.upsertPage(pageSlug, projectId, {
-      pageTitle: body.pageTitle,
-      pageUrl: body.pageUrl,
-    })
+    let page: Page
+    if (parentId) {
+      const parent = await prisma.comment.findFirst({
+        where: {
+          id: parentId,
+          deletedAt: null,
+          page: {
+            projectId,
+            slug: pageSlug,
+          },
+        },
+        select: {
+          page: true,
+        },
+      })
+
+      if (!parent) {
+        throw HTTPException.badRequest('Invalid parent comment')
+      }
+      page = parent.page
+    } else {
+      page = await this.pageService.upsertPage(pageSlug, projectId, {
+        pageTitle: body.pageTitle,
+        pageUrl: body.pageUrl,
+      })
+    }
 
     const created = await prisma.comment.create({
       data: {
         content: body.content,
         by_email: body.email,
         by_nickname: body.nickname,
+        acceptNotify: Boolean(body.email?.trim() && body.acceptNotify),
         pageId: page.id,
         parentId,
       },
@@ -219,18 +237,35 @@ export class CommentService extends RequestScopeService {
       },
     })
 
+    await this.hookService.approveComment(created)
+
     return created
   }
 
   async approve(commentId: string) {
-    await prisma.comment.update({
+    const result = await prisma.comment.updateMany({
       where: {
         id: commentId,
+        approved: false,
       },
       data: {
         approved: true,
       },
     })
+
+    const comment = await prisma.comment.findUnique({
+      where: {
+        id: commentId,
+      },
+    })
+
+    if (!comment) {
+      throw new Error(`Comment not found: ${commentId}`)
+    }
+
+    if (result.count === 1) {
+      await this.hookService.approveComment(comment)
+    }
 
     statService.capture('comment_approve')
   }
@@ -246,22 +281,4 @@ export class CommentService extends RequestScopeService {
     })
   }
 
-  async sendConfirmReplyNotificationEmail(
-    to: string,
-    pageSlug: string,
-    commentId: string,
-  ) {
-    const confirmToken = this.tokenService.genAcceptNotifyToken(commentId)
-    const confirmLink = `${resolvedConfig.host}/api/open/confirm_reply_notification?token=${confirmToken}`
-    this.emailService.send({
-      to,
-      from: this.emailService.sender,
-      subject: `Please confirm reply notification`,
-      html: makeConfirmReplyNotificationTemplate({
-        page_slug: pageSlug,
-        confirm_url: confirmLink,
-      }),
-    })
-    statService.capture('send_reply_confirm_email')
-  }
 }

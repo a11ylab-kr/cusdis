@@ -9,15 +9,10 @@ export enum UnSubscribeType {
 
 export enum SecretKey {
   ApproveComment = 'approve_comment',
-  Unsubscribe = 'unsubscribe',
-  AcceptNotify = 'accept_notify'
+  Unsubscribe = 'unsubscribe'
 }
 
 export module TokenBody {
-  export type AcceptNotifyToken = {
-    commentId: string
-  }
-
   export type ApproveComment = {
     commentId: string,
     owner: User
@@ -81,17 +76,4 @@ export class TokenService {
     )
   }
 
-  genAcceptNotifyToken(commentId: string) {
-    return this.sign(
-      SecretKey.AcceptNotify,
-      {
-        commentId
-      } as TokenBody.AcceptNotifyToken,
-      '1 day'
-    )
-  }
-
-  validateAcceptNotifyToken(token: string) {
-    return this.validate(token, SecretKey.AcceptNotify) as TokenBody.AcceptNotifyToken
-  }
 }
