@@ -5,6 +5,7 @@ window.CUSDIS_LOCALE = {
 
   // comment
   email: '이메일 (선택)',
+  reply_notify: '답글 알림 받기',
   nickname: '닉네임',
   reply_placeholder: '댓글...',
   reply_btn: '댓글',

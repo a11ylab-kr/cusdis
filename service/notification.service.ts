@@ -5,7 +5,9 @@ import { UserService } from './user.service'
 import { markdown } from './comment.service'
 import { TokenService } from './token.service'
 import { EmailService } from './email.service'
+import { statService } from './stat.service'
 import { makeNewCommentEmailTemplate } from '../templates/new_comment'
+import { makeReplyNotificationTemplate } from '../templates/reply_notification'
 
 export class NotificationService extends RequestScopeService {
   userService = new UserService(this.req)
@@ -92,6 +94,67 @@ export class NotificationService extends RequestScopeService {
       } catch (e) {
         console.error('[notification] failed to send email:', e)
       }
+    }
+  }
+
+  async addReply(comment: Comment) {
+    if (!comment.parentId) {
+      return
+    }
+
+    const reply = await prisma.comment.findUnique({
+      where: {
+        id: comment.id,
+      },
+      select: {
+        by_email: true,
+        by_nickname: true,
+        content: true,
+        parent: {
+          select: {
+            by_email: true,
+            acceptNotify: true,
+            content: true,
+          },
+        },
+        page: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+    })
+
+    if (!reply?.parent?.acceptNotify || !reply.parent.by_email) {
+      return
+    }
+
+    const recipient = reply.parent.by_email.trim().toLowerCase()
+    const sender = reply.by_email?.trim().toLowerCase()
+    if (sender && sender === recipient) {
+      return
+    }
+
+    const pageSlug = reply.page.slug.replace(/[\r\n]+/g, ' ')
+    const msg = {
+      to: reply.parent.by_email,
+      from: this.emailService.sender,
+      subject: `New reply on "${pageSlug}"`,
+      html: makeReplyNotificationTemplate({
+        page_slug: pageSlug,
+        original_content: markdown.render(reply.parent.content),
+        reply_content: markdown.render(reply.content),
+        reply_author: reply.by_nickname,
+      }),
+    }
+
+    try {
+      console.log('[notification] sending reply email')
+      await this.emailService.send(msg)
+      console.log('[notification] reply email sent successfully')
+      statService.capture('send_reply_notification_email')
+    } catch (e) {
+      console.error('[notification] failed to send reply email:', e)
     }
   }
 }

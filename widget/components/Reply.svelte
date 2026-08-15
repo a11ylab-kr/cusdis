@@ -7,6 +7,11 @@
   let content = ''
   let nickname = ''
   let email = ''
+  let acceptNotify = false
+
+  $: if (!email.trim()) {
+    acceptNotify = false
+  }
 
   let loading = false
 
@@ -36,6 +41,7 @@
         content,
         nickname,
         email,
+        acceptNotify: Boolean(email.trim() && acceptNotify),
         parentId,
         pageUrl,
         pageTitle,
@@ -52,6 +58,7 @@
     content = ''
     nickname = ''
     email = ''
+    acceptNotify = false
     onSuccess && onSuccess()
   }
 
@@ -89,6 +96,18 @@
       title={t('reply_placeholder')}
       bind:value={content}
     />
+  </div>
+
+  <div class="px-1">
+    <label class="inline-flex items-center dark:text-gray-200">
+      <input
+        class="mr-2"
+        type="checkbox"
+        bind:checked={acceptNotify}
+        disabled={!email.trim()}
+      />
+      <span>{t('reply_notify')}</span>
+    </label>
   </div>
 
   <div class="px-1">

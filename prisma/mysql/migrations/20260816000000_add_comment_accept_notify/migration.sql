@@ -1,0 +1,2 @@
+ALTER TABLE `comments`
+ADD COLUMN `acceptNotify` BOOLEAN NOT NULL DEFAULT false;
