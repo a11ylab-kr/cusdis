@@ -31,7 +31,7 @@ export const resolvedConfig = {
   smtp: {
     host: process.env.SMTP_HOST as EnvVariable,
     port: Number((process.env.SMTP_PORT as EnvVariable) || '587'),
-    secure: Boolean((process.env.SMTP_SECURE as EnvVariable) || 'true'),
+    secure: process.env.SMTP_SECURE !== 'false',
     auth: {
       user: process.env.SMTP_USER as EnvVariable,
       pass: process.env.SMTP_PASSWORD as EnvVariable,
