@@ -88,7 +88,7 @@ export class NotificationService extends RequestScopeService {
       }
 
       try {
-        console.log('[notification] sending email to', notificationEmail)
+        console.log('[notification] sending new comment email')
         await this.emailService.send(msg)
         console.log('[notification] email sent successfully')
       } catch (e) {

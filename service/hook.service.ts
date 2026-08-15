@@ -9,8 +9,12 @@ export class HookService extends RequestScopeService {
   webhookService = new WebhookService(this.req)
 
   async addComment(comment: Comment, projectId: string) {
-    this.notificationService.addComment(comment, projectId)
-    this.webhookService.addComment(comment, projectId)
+    try {
+      await this.notificationService.addComment(comment, projectId)
+    } catch (e) {
+      console.error('[notification] failed to prepare new comment email:', e)
+    }
+    void this.webhookService.addComment(comment, projectId)
   }
 
   async approveComment(comment: Comment) {
